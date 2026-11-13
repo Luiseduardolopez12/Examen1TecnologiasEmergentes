@@ -8,8 +8,9 @@ from etl.config import dw_engine
 
 
 def _tipos(df):
-    # Sin esto pandas crea VARCHAR(max) y se pierden acentos y caracteres especiales
-    return {c: types.NVARCHAR() for c in df.columns if df[c].dtype == object}
+    # Sin esto pandas crea VARCHAR(max) y se pierden acentos y caracteres especiales.
+    # is_string_dtype sirve tanto en pandas 2 (object) como en pandas 3 (str)
+    return {c: types.NVARCHAR() for c in df.columns if pd.api.types.is_string_dtype(df[c])}
 
 
 def cargar_raw(df, nombre, execution_id, reiniciar=False):

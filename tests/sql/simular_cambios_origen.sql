@@ -12,7 +12,7 @@ SET CustomerCategoryID = (SELECT CustomerCategoryID FROM Sales.CustomerCategorie
                           WHERE CustomerCategoryName = N'Supermarket')
 WHERE CustomerID = 2;
 
--- 2) Cinco líneas "tocadas" sin cambiar valores -> se leen en el incremental pero no deben contar como actualizadas
+-- 2) Cinco líneas "tocadas" sin cambiar valores -> en staging cuentan como actualizadas (cambió LastEditedWhen), pero en el DW no cambia nada
 UPDATE TOP (5) Sales.InvoiceLines SET LastEditedWhen = SYSDATETIME();
 
 -- 3) Una línea con cambio real de valor -> debe contar como 1 actualizada en el DW

@@ -8,9 +8,11 @@ from typing import Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from api import consultas, seguridad
+from ia import asistente, registro
+from ia.gemini import ErrorIA
 
 app = FastAPI(title="API Analítica de Ventas", version="1.0")
 
@@ -104,6 +106,22 @@ def detalle(pagina: int = Query(1, ge=1), tamano: int = Query(20, ge=1, le=100),
 def pronostico():
     """Predicción de ventas de los próximos meses (no es dato histórico)."""
     return consultas.pronostico()
+
+
+class Pregunta(BaseModel):
+    pregunta: str = Field(min_length=3, max_length=500)
+
+
+@app.post("/api/asistente", dependencies=protegido)
+def preguntar(p: Pregunta):
+    """Asistente de IA: responde solo con datos del Data Warehouse y registra cada pregunta."""
+    try:
+        resultado = asistente.responder(p.pregunta.strip())
+    except ErrorIA as e:
+        registro.guardar(p.pregunta, error=str(e))
+        raise HTTPException(503, "El asistente no está disponible en este momento. Intenta de nuevo en unos segundos.")
+    registro.guardar(p.pregunta, resultado)
+    return resultado
 
 
 @app.get("/api/etl/ejecuciones", dependencies=protegido)

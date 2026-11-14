@@ -20,6 +20,16 @@ export interface LineaVenta {
   vendedor: string; cantidad: number; venta_neta: number; ganancia: number;
 }
 export interface Detalle { pagina: number; tamano: number; total: number; filas: LineaVenta[]; }
+export interface FilaPronostico { mes: string; horizonte_mes: number; valor: number; inferior: number; superior: number; }
+export interface MetricaModelo {
+  modelo: string; es_baseline: boolean; ganador: boolean;
+  mae_validacion: number; rmse_validacion: number; mape_validacion: number;
+  mae_prueba: number; rmse_prueba: number; mape_prueba: number;
+}
+export interface Pronostico {
+  disponible: boolean; modelo?: string; version?: string; base_hasta?: string; generado_en?: string;
+  historial?: Mes[]; pronostico?: FilaPronostico[]; metricas?: MetricaModelo[];
+}
 export interface Opciones { grupos: string[]; territorios: string[]; rango: { desde: string; hasta: string }; }
 export interface Actualizacion { ultima_carga: string | null; datos_hasta: string | null; }
 export interface Ejecucion {
@@ -56,5 +66,6 @@ export class Api {
   grupos(f: Filtros) { return this.get<Grupo[]>('/api/ventas-por-grupo', f); }
   vendedores(f: Filtros) { return this.get<Vendedor[]>('/api/vendedores', f); }
   detalle(f: Filtros, pagina: number) { return this.get<Detalle>('/api/detalle', f, { pagina, tamano: 15 }); }
+  pronostico() { return this.get<Pronostico>('/api/pronostico'); }
   ejecuciones() { return this.get<Ejecucion[]>('/api/etl/ejecuciones', {}, { limite: 30 }); }
 }

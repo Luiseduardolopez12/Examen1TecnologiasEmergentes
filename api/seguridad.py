@@ -1,4 +1,4 @@
-"""Login simple: usuario y clave del .env, token firmado con expiración (solo librería estándar)."""
+"Login simple: usuario y clave del .env, token firmado con expiración (solo librería estándar)."
 import base64
 import hashlib
 import hmac
@@ -46,7 +46,10 @@ def usuario_actual(credenciales: HTTPAuthorizationCredentials = Depends(esquema)
     _, _, secreto = _config()
     if credenciales is None:
         raise HTTPException(401, "Falta el token")
-    token = credenciales.credentials
+    # Perdona errores comunes al pegar: espacios, comillas o un "Bearer" repetido
+    token = credenciales.credentials.strip().strip('"').strip("'")
+    if token.lower().startswith("bearer "):
+        token = token[7:].strip()
     try:
         cuerpo, firma = token.split(".")
         if not hmac.compare_digest(firma, _firma(cuerpo, secreto)):

@@ -100,6 +100,12 @@ def detalle(pagina: int = Query(1, ge=1), tamano: int = Query(20, ge=1, le=100),
             "filas": consultas.detalle(pagina, tamano, **f)}
 
 
+@app.get("/api/pronostico", dependencies=protegido)
+def pronostico():
+    """Predicción de ventas de los próximos meses (no es dato histórico)."""
+    return consultas.pronostico()
+
+
 @app.get("/api/etl/ejecuciones", dependencies=protegido)
 def ejecuciones(limite: int = Query(30, ge=1, le=200)):
     return consultas.ejecuciones_etl(limite)

@@ -1,10 +1,10 @@
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Subscription, forkJoin } from 'rxjs';
 import {
-  Api, Cliente, Detalle, Filtros, Grupo, Kpis, Mes, Opciones, Producto, Territorio, Vendedor,
+  Api, Cliente, Detalle, Filtros, Grupo, Kpis, Mes, MetricaModelo, Opciones, Producto, Pronostico, Territorio, Vendedor,
 } from '../nucleo/api';
 import { dinero, dinero2, fecha, numero, porcentaje } from '../nucleo/formato';
-import { Grafico } from '../grafico/grafico';
+import { Grafico, Serie } from '../grafico/grafico';
 
 @Component({
   selector: 'app-dashboard',
@@ -29,6 +29,7 @@ export class Dashboard implements OnDestroy {
   vendedores = signal<Vendedor[]>([]);
   detalle = signal<Detalle | null>(null);
   pagina = signal(1);
+  pron = signal<Pronostico | null>(null);
 
   cargando = signal(true);
   error = signal('');
@@ -49,6 +50,46 @@ export class Dashboard implements OnDestroy {
   vendedoresEtiquetas = computed(() => this.vendedores().map(v => v.vendedor));
   vendedoresSeries = computed(() => [{ nombre: 'Ventas netas', valores: this.vendedores().map(v => v.ventas_netas) }]);
 
+  // ---- predicción (no depende de los filtros: es el pronóstico global guardado por el modelo) ----
+  private historialPron = computed(() => {
+    const p = this.pron();
+    return p?.disponible ? (p.historial ?? []).filter(m => m.mes <= (p.base_hasta ?? '')).slice(-18) : [];
+  });
+  pronEtiquetas = computed(() => [
+    ...this.historialPron().map(m => m.mes),
+    ...(this.pron()?.pronostico ?? []).map(f => f.mes),
+  ]);
+  pronSeries = computed<Serie[]>(() => {
+    const hist = this.historialPron(), fut = this.pron()?.pronostico ?? [];
+    const antes = hist.map(() => null), despues = fut.map(() => null);
+    return [
+      { nombre: 'Histórico (dato real)', valores: [...hist.map(m => m.ventas_netas), ...despues] },
+      { nombre: 'Predicción', valores: [...antes, ...fut.map(f => f.valor)], color: 1, estilo: 'discontinua' },
+      { nombre: 'Límite superior (80 %)', valores: [...antes, ...fut.map(f => f.superior)], color: 1, estilo: 'banda' },
+      { nombre: 'Límite inferior (80 %)', valores: [...antes, ...fut.map(f => f.inferior)], color: 1, estilo: 'banda' },
+    ];
+  });
+  resumenModelo = computed(() => {
+    const m = this.pron()?.metricas ?? [];
+    const base = m.find(x => x.es_baseline), elegido = m.find(x => x.ganador);
+    if (!base || !elegido) return '';
+    if (elegido.es_baseline) {
+      return 'El modelo más simple (repetir el último mes) fue el mejor: los modelos más complejos no aportaron mejora.';
+    }
+    const mejora = (1 - elegido.mae_prueba / base.mae_prueba) * 100;
+    return `En los meses de prueba, el modelo elegido tuvo ${Math.abs(mejora).toFixed(0)} % ` +
+      `${mejora >= 0 ? 'menos' : 'más'} error (MAE) que el baseline de repetir el último mes.`;
+  });
+  nombreModelo(m: MetricaModelo | string): string {
+    const nombres: Record<string, string> = {
+      ultimo_valor: 'Repetir el último mes', media_movil_3: 'Promedio de 3 meses',
+      mismo_mes_anio_pasado: 'Mismo mes del año pasado', tendencia_lineal: 'Tendencia lineal',
+      tendencia_estacional: 'Tendencia + estacionalidad',
+    };
+    const clave = typeof m === 'string' ? m : m.modelo;
+    return nombres[clave] ?? clave;
+  }
+
   totalPaginas = computed(() => {
     const d = this.detalle();
     return d ? Math.max(1, Math.ceil(d.total / d.tamano)) : 1;
@@ -60,6 +101,7 @@ export class Dashboard implements OnDestroy {
 
   constructor() {
     this.api.opciones().subscribe({ next: o => this.opciones.set(o), error: () => {} });
+    this.api.pronostico().subscribe({ next: p => this.pron.set(p), error: () => this.pron.set({ disponible: false }) });
     this.recargar();
   }
 

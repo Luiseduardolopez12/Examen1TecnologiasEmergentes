@@ -4,7 +4,12 @@ import { dinero, dineroCompacto } from '../nucleo/formato';
 
 Chart.register(...registerables);
 
-export interface Serie { nombre: string; valores: number[]; }
+export interface Serie {
+  nombre: string;
+  valores: (number | null)[];                 // null = sin dato en ese mes
+  color?: number;                             // 0 = serie 1, 1 = serie 2 (por defecto, según la posición)
+  estilo?: 'normal' | 'discontinua' | 'banda'; // discontinua = predicción; banda = rango sombreado
+}
 
 /** Gráfico de líneas o de barras (horizontales o verticales) con Chart.js.
  *  Los colores salen de las variables CSS, así que cambia solo con el modo claro/oscuro. */
@@ -16,6 +21,7 @@ export interface Serie { nombre: string; valores: number[]; }
 export class Grafico implements OnDestroy {
   tipo = input<'linea' | 'barras'>('barras');
   horizontal = input(false);
+  desdeCero = input(true);   // false: el eje se ajusta al rango de los datos (útil para ver una predicción)
   etiquetas = input.required<string[]>();
   series = input.required<Serie[]>();
   descripcion = input('');
@@ -58,29 +64,38 @@ export class Grafico implements OnDestroy {
     const rejilla = this.color('--rejilla');
     const superficie = this.color('--superficie');
 
-    const datasets = series.map((s, i) => ({
-      label: s.nombre,
-      data: s.valores,
-      borderColor: colores[i],
-      backgroundColor: esLinea ? colores[i] : colores[i],
-      borderWidth: esLinea ? 2 : 0,
-      pointRadius: 0,
-      pointHoverRadius: 5,
-      pointHoverBackgroundColor: colores[i],
-      pointHoverBorderColor: superficie,
-      pointHoverBorderWidth: 2,
-      tension: 0,   // líneas rectas: no inventamos curvas entre meses
-      maxBarThickness: 20,
-      // esquinas redondeadas solo en el extremo del dato, pegado a la base
-      borderRadius: horizontal ? { topRight: 4, bottomRight: 4 } : { topLeft: 4, topRight: 4 },
-      borderSkipped: false,
-    }));
+    const datasets = series.map((s, i) => {
+      const c = colores[s.color ?? i];
+      const banda = s.estilo === 'banda';
+      const prediccion = s.estilo === 'discontinua';
+      return {
+        label: s.nombre,
+        data: s.valores,
+        borderColor: banda ? 'transparent' : c,
+        backgroundColor: banda ? c + '2e' : c,
+        borderWidth: esLinea ? (banda ? 0 : 2) : 0,
+        borderDash: prediccion ? [6, 4] : [],
+        // la banda se rellena hasta la serie siguiente (límite superior -> límite inferior)
+        fill: banda && series[i + 1]?.estilo === 'banda' ? '+1' : false,
+        pointRadius: prediccion ? 3 : 0,
+        pointHoverRadius: banda ? 0 : 5,
+        pointBackgroundColor: c,
+        pointHoverBackgroundColor: c,
+        pointHoverBorderColor: superficie,
+        pointHoverBorderWidth: 2,
+        tension: 0,   // líneas rectas: no inventamos curvas entre meses
+        maxBarThickness: 20,
+        // esquinas redondeadas solo en el extremo del dato, pegado a la base
+        borderRadius: horizontal ? { topRight: 4, bottomRight: 4 } : { topLeft: 4, topRight: 4 },
+        borderSkipped: false,
+      };
+    });
 
     const ejeValor = {
       grid: { color: rejilla },
       border: { display: false },
       ticks: { color: texto3, callback: (v: number | string) => dineroCompacto(Number(v)) },
-      beginAtZero: true,
+      beginAtZero: this.desdeCero(),
     };
     const ejeCategoria = {
       grid: { display: false },
@@ -89,6 +104,7 @@ export class Grafico implements OnDestroy {
         color: texto2,
         maxRotation: 0,
         autoSkip: esLinea,
+        autoSkipPadding: 24,
         maxTicksLimit: esLinea ? 10 : undefined,
         callback(this: any, valor: number | string) {
           const t = String(this.getLabelForValue(valor as number));
@@ -110,7 +126,11 @@ export class Grafico implements OnDestroy {
           legend: {
             display: series.length > 1,
             align: 'start',
-            labels: { color: texto2, usePointStyle: true, pointStyle: 'rectRounded', boxWidth: 10, padding: 16 },
+            labels: {
+              color: texto2, usePointStyle: true, pointStyle: 'rectRounded', boxWidth: 10, padding: 16,
+              // la banda se explica en el texto del panel, no en la leyenda
+              filter: (item: any) => series[item.datasetIndex]?.estilo !== 'banda',
+            },
           },
           tooltip: {
             backgroundColor: superficie,

@@ -50,7 +50,71 @@
         <app-grafico tipo="linea" [etiquetas]="mesesEtiquetas()" [series]="mesesSeries()"
                      descripcion="Línea de ventas netas y ganancia mensuales" />
       </div>
-    } @else { <p class="vacio">Sin datos para estos filtros.</p> }
+    } @else { <p class="vacio">{{ cargando() ? 'Cargando…' : 'Sin datos para estos filtros.' }}</p> }
+  </section>
+
+  <!-- Predicción: siempre identificada como tal, separada de los datos históricos -->
+  <section class="panel ancho prediccion">
+    <div class="titulo-panel">
+      <h2>Predicción de ventas netas</h2>
+      <span class="etiqueta">PREDICCIÓN · no es dato histórico</span>
+    </div>
+    @if (pron(); as p) {
+      @if (p.disponible) {
+        <p class="nota">
+          Modelo: <strong>{{ nombreModelo(p.modelo ?? '') }}</strong> · versión {{ p.version }} ·
+          entrenado con datos hasta <strong>{{ p.base_hasta }}</strong> ·
+          (generado el {{ fecha(p.generado_en, true) }}).
+          La línea discontinua es la predicción y la banda sombreada, el rango probable (80 %).
+          Con pocos meses de historia el rango es amplio: úsalo como referencia, no como cifra exacta.
+        </p>
+        <div class="grafico alto">
+          <app-grafico tipo="linea" [desdeCero]="false" [etiquetas]="pronEtiquetas()" [series]="pronSeries()"
+                       descripcion="Ventas netas históricas y predicción de los próximos meses con su rango" />
+        </div>
+        <div class="dos">
+          <div class="tabla-caja">
+            <table>
+              <thead><tr><th>Mes</th><th class="num">Predicción</th><th class="num">Rango (80 %)</th></tr></thead>
+              <tbody>
+                @for (f of p.pronostico ?? []; track f.mes) {
+                  <tr><td>{{ f.mes }}</td><td class="num">{{ dinero(f.valor) }}</td>
+                      <td class="num">{{ dinero(f.inferior) }} – {{ dinero(f.superior) }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <div class="tabla-caja">
+              <table>
+                <thead>
+                  <tr><th>Modelo comparado</th><th class="num">Error en validación</th>
+                      <th class="num">Error en prueba</th><th class="num">% en prueba</th><th></th></tr>
+                </thead>
+                <tbody>
+                  @for (m of p.metricas ?? []; track m.modelo) {
+                    <tr>
+                      <td>{{ nombreModelo(m) }}</td>
+                      <td class="num">{{ dinero(m.mae_validacion) }}</td>
+                      <td class="num">{{ dinero(m.mae_prueba) }}</td>
+                      <td class="num">{{ porcentaje(m.mape_prueba) }}</td>
+                      <td>
+                        @if (m.ganador) { <span class="chip elegido">✓ Elegido</span> }
+                        @else if (m.es_baseline) { <span class="chip">Baseline</span> }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <p class="nota">Error = MAE: cuánto se equivoca el modelo, en promedio, por mes. Elegido con la validación;
+              la prueba (últimos 6 meses) se usó una sola vez al final. {{ resumenModelo() }}</p>
+          </div>
+        </div>
+      } @else {
+        <p class="vacio">Todavía no se ha entrenado el modelo. Ejecuta <code>python -m ml.entrenar</code>.</p>
+      }
+    } @else { <p class="vacio">Cargando…</p> }
   </section>
 
   <div class="rejilla">
@@ -59,7 +123,7 @@
       @if (productos().length) {
         <div class="grafico"><app-grafico [horizontal]="true" [etiquetas]="productosEtiquetas()"
           [series]="productosSeries()" descripcion="Barras de los diez productos más vendidos" /></div>
-      } @else { <p class="vacio">Sin datos para estos filtros.</p> }
+      } @else { <p class="vacio">{{ cargando() ? 'Cargando…' : 'Sin datos para estos filtros.' }}</p> }
     </section>
 
     <section class="panel">
@@ -67,7 +131,7 @@
       @if (grupos().length) {
         <div class="grafico"><app-grafico [horizontal]="true" [etiquetas]="gruposEtiquetas()"
           [series]="gruposSeries()" descripcion="Barras de ventas por grupo de producto" /></div>
-      } @else { <p class="vacio">Sin datos para estos filtros.</p> }
+      } @else { <p class="vacio">{{ cargando() ? 'Cargando…' : 'Sin datos para estos filtros.' }}</p> }
     </section>
 
     <section class="panel">
@@ -75,7 +139,7 @@
       @if (territorios().length) {
         <div class="grafico"><app-grafico [horizontal]="true" [etiquetas]="territoriosEtiquetas()"
           [series]="territoriosSeries()" descripcion="Barras de ventas por territorio de ventas" /></div>
-      } @else { <p class="vacio">Sin datos para estos filtros.</p> }
+      } @else { <p class="vacio">{{ cargando() ? 'Cargando…' : 'Sin datos para estos filtros.' }}</p> }
     </section>
 
     <section class="panel">
@@ -83,7 +147,7 @@
       @if (vendedores().length) {
         <div class="grafico"><app-grafico [horizontal]="true" [etiquetas]="vendedoresEtiquetas()"
           [series]="vendedoresSeries()" descripcion="Barras de ventas por vendedor" /></div>
-      } @else { <p class="vacio">Sin datos para estos filtros.</p> }
+      } @else { <p class="vacio">{{ cargando() ? 'Cargando…' : 'Sin datos para estos filtros.' }}</p> }
     </section>
   </div>
 
@@ -102,7 +166,7 @@
           </tbody>
         </table>
       </div>
-    } @else { <p class="vacio">Sin datos para estos filtros.</p> }
+    } @else { <p class="vacio">{{ cargando() ? 'Cargando…' : 'Sin datos para estos filtros.' }}</p> }
   </section>
 
   <!-- Detalle -->

@@ -81,3 +81,44 @@ def test_detalle_pagina_correctamente():
 def test_limites_invalidos_dan_422():
     assert cliente.get("/api/top-productos", params={"limite": 0}, headers=_token()).status_code == 422
     assert cliente.get("/api/detalle", params={"tamano": 5000}, headers=_token()).status_code == 422
+
+
+def test_token_pegado_con_comillas_o_con_bearer_repetido_tambien_sirve():
+    token = _token()["Authorization"][7:]
+    for pegado in (f'"{token}"', f"Bearer {token}", f"  {token}  "):
+        r = cliente.get("/api/kpis", headers={"Authorization": f"Bearer {pegado}"})
+        assert r.status_code == 200, pegado
+
+
+def test_pronostico_sin_tabla_o_sin_filas_responde_no_disponible(monkeypatch):
+    monkeypatch.setattr(consultas, "consultar", lambda sql, params=None: [{"o": None}])
+    assert cliente.get("/api/pronostico", headers=_token()).json() == {"disponible": False}
+    monkeypatch.setattr(consultas, "consultar",
+                        lambda sql, params=None: [{"o": 1, "r": None}])
+    assert cliente.get("/api/pronostico", headers=_token()).json() == {"disponible": False}
+
+
+def test_pronostico_devuelve_prediccion_metricas_e_historial(monkeypatch):
+    def falsa(sql, params=None):
+        if "OBJECT_ID" in sql:
+            return [{"o": 99}]
+        if "MAX(ml_run_id)" in sql:
+            return [{"r": 7}]
+        if "FROM dw.PronosticoVentas" in sql:
+            assert params == {"run": 7}
+            return [{"mes": "2016-06", "horizonte_mes": 1, "valor": 4.5, "inferior": 4.0, "superior": 5.0,
+                     "modelo": "tendencia_lineal", "version": "v1", "base_hasta": "2016-05", "generado_en": "2026-11-14"}]
+        if "audit.ml_metricas" in sql:
+            return [{"modelo": "tendencia_lineal", "es_baseline": 0, "ganador": 1, "mae_validacion": 1, "rmse_validacion": 1,
+                     "mape_validacion": 1, "mae_prueba": 1, "rmse_prueba": 1, "mape_prueba": 1}]
+        return [{"mes": "2016-05", "ventas_netas": 4.1, "ganancia": 2.0}]      # historial
+
+    monkeypatch.setattr(consultas, "consultar", falsa)
+    d = cliente.get("/api/pronostico", headers=_token()).json()
+    assert d["disponible"] and d["modelo"] == "tendencia_lineal" and d["base_hasta"] == "2016-05"
+    assert d["metricas"][0]["ganador"] is True and d["metricas"][0]["es_baseline"] is False
+    assert d["pronostico"][0]["mes"] == "2016-06" and d["historial"][0]["mes"] == "2016-05"
+
+
+def test_pronostico_exige_token():
+    assert cliente.get("/api/pronostico").status_code == 401

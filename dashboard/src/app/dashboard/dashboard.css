@@ -44,3 +44,17 @@ tbody tr:hover { background: var(--fondo); }
   .contenido { padding: 16px; }
   .rejilla { grid-template-columns: 1fr; }
 }
+
+/* panel de predicción */
+.prediccion { border-style: dashed; }
+.titulo-panel { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.etiqueta {
+  font-size: 11px; font-weight: 700; letter-spacing: .04em; padding: 3px 8px; border-radius: 6px;
+  color: var(--serie-2); border: 1px solid var(--serie-2);
+}
+.nota { margin: 0; font-size: 13px; color: var(--texto-2); }
+.dos { display: grid; grid-template-columns: minmax(300px, 1fr) minmax(420px, 1.4fr); gap: 20px; align-items: start; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--borde); color: var(--texto-2); white-space: nowrap; }
+.chip.elegido { color: var(--ok); border-color: var(--ok); font-weight: 600; }
+code { background: var(--fondo); border: 1px solid var(--borde); border-radius: 4px; padding: 1px 5px; font-size: 13px; }
+@media (max-width: 900px) { .dos { grid-template-columns: 1fr; } }

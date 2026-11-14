@@ -1,0 +1,81 @@
+{
+  "version": "v202611140124",
+  "entrenado_en": "2026-11-14T01:24:26",
+  "modelo": "tendencia_lineal",
+  "parametros": {},
+  "base_hasta": "2016-05",
+  "horizonte_meses": 6,
+  "meses_entrenamiento": 35,
+  "meses_prueba": 6,
+  "metricas": [
+    {
+      "modelo": "ultimo_valor",
+      "descripcion": "Repite el último mes observado",
+      "es_baseline": true,
+      "ganador": false,
+      "parametros": {},
+      "mae_validacion": 375239.3326388889,
+      "rmse_validacion": 461531.03845344996,
+      "mape_validacion": 8.386138825249573,
+      "mae_prueba": 453986.51666666666,
+      "rmse_prueba": 513784.69345550775,
+      "mape_prueba": 9.756767281338517
+    },
+    {
+      "modelo": "media_movil_3",
+      "descripcion": "Promedio de los últimos meses, sin tendencia ni estacionalidad",
+      "es_baseline": false,
+      "ganador": false,
+      "parametros": {
+        "ventana": 3
+      },
+      "mae_validacion": 322761.65625,
+      "rmse_validacion": 410628.32263110956,
+      "mape_validacion": 7.148145182507139,
+      "mae_prueba": 237045.98333333348,
+      "rmse_prueba": 304199.0893536612,
+      "mape_prueba": 5.227994564833812
+    },
+    {
+      "modelo": "mismo_mes_anio_pasado",
+      "descripcion": "Repite lo que se vendió el mismo mes un año antes",
+      "es_baseline": false,
+      "ganador": false,
+      "parametros": {},
+      "mae_validacion": 471501.0625000001,
+      "rmse_validacion": 549663.094487937,
+      "mape_validacion": 10.46420474737309,
+      "mae_prueba": 241093.4416666668,
+      "rmse_prueba": 305677.58028294245,
+      "mape_prueba": 5.237669649249428
+    },
+    {
+      "modelo": "tendencia_lineal",
+      "descripcion": "Recta ajustada al paso del tiempo (regresión lineal)",
+      "es_baseline": false,
+      "ganador": true,
+      "parametros": {},
+      "mae_validacion": 252800.47051466355,
+      "rmse_validacion": 345074.9320760002,
+      "mape_validacion": 5.6299819436321545,
+      "mae_prueba": 260196.56818627464,
+      "rmse_prueba": 327257.6214302472,
+      "mape_prueba": 6.029129746831219
+    },
+    {
+      "modelo": "tendencia_estacional",
+      "descripcion": "Tendencia lineal más un ajuste por mes del año (Ridge)",
+      "es_baseline": false,
+      "ganador": false,
+      "parametros": {
+        "alpha": 0.1
+      },
+      "mae_validacion": 298044.2184869487,
+      "rmse_validacion": 354882.8117975384,
+      "mape_validacion": 6.764092244222347,
+      "mae_prueba": 236047.55701192524,
+      "rmse_prueba": 278498.2926979795,
+      "mape_prueba": 5.230777201732439
+    }
+  ]
+}

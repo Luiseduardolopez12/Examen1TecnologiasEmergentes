@@ -159,3 +159,29 @@ def ejecuciones_etl(limite=30):
         SELECT TOP (:limite) execution_id, pipeline_name, status, rows_read, rows_inserted,
                rows_updated, rows_rejected, start_time, end_time, error_detail
         FROM audit.etl_runs ORDER BY execution_id DESC""", {"limite": limite})
+
+
+def pronostico():
+    """Último pronóstico guardado por ml/entrenar.py, con las métricas del modelo.
+    Es PREDICCIÓN: el historial que lo acompaña sí sale del Data Warehouse."""
+    if consultar("SELECT OBJECT_ID('dw.PronosticoVentas') AS o")[0]["o"] is None:
+        return {"disponible": False}
+    run = consultar("SELECT MAX(ml_run_id) AS r FROM dw.PronosticoVentas")[0]["r"]
+    if run is None:
+        return {"disponible": False}
+    filas = consultar("""
+        SELECT mes, horizonte_mes, CAST(valor AS FLOAT) AS valor, CAST(inferior AS FLOAT) AS inferior,
+               CAST(superior AS FLOAT) AS superior, modelo, version, base_hasta, generado_en
+        FROM dw.PronosticoVentas WHERE ml_run_id = :run ORDER BY horizonte_mes""", {"run": run})
+    metricas = consultar("""
+        SELECT modelo, es_baseline, ganador, mae_validacion, rmse_validacion, mape_validacion,
+               mae_prueba, rmse_prueba, mape_prueba
+        FROM audit.ml_metricas WHERE ml_run_id = :run ORDER BY mae_validacion""", {"run": run})
+    return {
+        "disponible": True,
+        "modelo": filas[0]["modelo"], "version": filas[0]["version"],
+        "base_hasta": filas[0]["base_hasta"], "generado_en": filas[0]["generado_en"],
+        "pronostico": [{k: f[k] for k in ("mes", "horizonte_mes", "valor", "inferior", "superior")} for f in filas],
+        "metricas": [{**m, "es_baseline": bool(m["es_baseline"]), "ganador": bool(m["ganador"])} for m in metricas],
+        "historial": ventas_mensuales(),
+    }

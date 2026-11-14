@@ -9,6 +9,7 @@ export const routes: Routes = [
     loadComponent: () => import('./layout/layout').then(m => m.Layout),
     children: [
       { path: '', loadComponent: () => import('./dashboard/dashboard').then(m => m.Dashboard) },
+      { path: 'asistente', loadComponent: () => import('./asistente/asistente').then(m => m.Asistente) },
       { path: 'etl', loadComponent: () => import('./etl/etl').then(m => m.Etl) },
     ],
   },

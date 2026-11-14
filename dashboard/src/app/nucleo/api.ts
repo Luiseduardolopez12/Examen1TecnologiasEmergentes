@@ -30,6 +30,10 @@ export interface Pronostico {
   disponible: boolean; modelo?: string; version?: string; base_hasta?: string; generado_en?: string;
   historial?: Mes[]; pronostico?: FilaPronostico[]; metricas?: MetricaModelo[];
 }
+export interface FuenteAsistente { herramienta: string; filtros: Record<string, string>; }
+export interface RespuestaAsistente {
+  respuesta: string; respondida: boolean; fuentes: FuenteAsistente[]; modelo: string; duracion_ms: number;
+}
 export interface Opciones { grupos: string[]; territorios: string[]; rango: { desde: string; hasta: string }; }
 export interface Actualizacion { ultima_carga: string | null; datos_hasta: string | null; }
 export interface Ejecucion {
@@ -67,5 +71,6 @@ export class Api {
   vendedores(f: Filtros) { return this.get<Vendedor[]>('/api/vendedores', f); }
   detalle(f: Filtros, pagina: number) { return this.get<Detalle>('/api/detalle', f, { pagina, tamano: 15 }); }
   pronostico() { return this.get<Pronostico>('/api/pronostico'); }
+  preguntar(pregunta: string) { return this.http.post<RespuestaAsistente>(`${API_URL}/api/asistente`, { pregunta }); }
   ejecuciones() { return this.get<Ejecucion[]>('/api/etl/ejecuciones', {}, { limite: 30 }); }
 }

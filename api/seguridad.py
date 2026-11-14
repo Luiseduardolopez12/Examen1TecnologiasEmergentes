@@ -6,9 +6,13 @@ import json
 import os
 import time
 
-from fastapi import Header, HTTPException
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 DURACION_SEGUNDOS = 8 * 3600
+
+# Esto es lo que hace que Swagger (/docs) muestre el botón Authorize
+esquema = HTTPBearer(auto_error=False)
 
 
 def _config():
@@ -37,12 +41,12 @@ def validar_credenciales(usuario, clave):
     return hmac.compare_digest(usuario, u) and hmac.compare_digest(clave, c)
 
 
-def usuario_actual(authorization: str = Header(default="")):
+def usuario_actual(credenciales: HTTPAuthorizationCredentials = Depends(esquema)):
     """Dependencia: exige 'Authorization: Bearer <token>' válido y vigente."""
     _, _, secreto = _config()
-    if not authorization.startswith("Bearer "):
+    if credenciales is None:
         raise HTTPException(401, "Falta el token")
-    token = authorization[7:]
+    token = credenciales.credentials
     try:
         cuerpo, firma = token.split(".")
         if not hmac.compare_digest(firma, _firma(cuerpo, secreto)):

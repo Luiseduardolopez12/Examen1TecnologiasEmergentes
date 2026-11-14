@@ -1,0 +1,53 @@
+<main class="contenido">
+  <div class="titulo">
+    <div>
+      <h1>Alertas de ventas</h1>
+      <p class="sub">Se genera una alerta cuando las ventas netas de un mes caen más de {{ umbral() }} % frente al mes anterior
+        o frente al mismo mes del año pasado. Cada alerta se registra una sola vez.</p>
+    </div>
+    <button type="button" (click)="cargar()">Actualizar</button>
+  </div>
+
+  @if (error()) { <p class="aviso">{{ error() }}</p> }
+
+  <section class="resumen">
+    <article><span>Alertas nuevas</span><strong [class.mal]="nuevas() > 0">{{ nuevas() }}</strong></article>
+    <article><span>Total registradas</span><strong>{{ lista().length }}</strong></article>
+    <article><span>Más reciente</span><strong>{{ lista()[0]?.periodo ?? '—' }}</strong></article>
+  </section>
+
+  <section class="panel tabla-caja">
+    <table>
+      <thead>
+        <tr>
+          <th>Periodo</th><th>Regla</th><th>Severidad</th>
+          <th class="num">Variación</th><th class="num">Ventas del mes</th><th class="num">Referencia</th>
+          <th>Estado</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (a of lista(); track a.alerta_id) {
+          <tr [class.revisada]="a.estado === 'REVISADA'">
+            <td><strong>{{ a.periodo }}</strong></td>
+            <td>{{ regla(a.regla) }}</td>
+            <td><span class="sev" [class.alta]="a.severidad === 'ALTA'">{{ a.severidad === 'ALTA' ? '▲ Alta' : '△ Media' }}</span></td>
+            <td class="num caida">{{ caida(a) }}</td>
+            <td class="num">{{ dinero(a.valor_actual) }}</td>
+            <td class="num">{{ dinero(a.valor_referencia) }}</td>
+            <td>{{ a.estado === 'NUEVA' ? 'Nueva' : 'Revisada' }}</td>
+            <td class="accion">
+              @if (a.estado === 'NUEVA') {
+                <button type="button" (click)="revisar(a)">Marcar revisada</button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="8" class="vacio">
+            @if (cargando()) { Cargando… } @else { Sin alertas. Las ventas no han caído más de {{ umbral() }} % en los meses evaluados. }
+          </td></tr>
+        }
+      </tbody>
+    </table>
+  </section>
+  <p class="nota">Las alertas se evalúan al final de cada carga del ETL. Las cifras son ventas netas, sin impuesto.</p>
+</main>

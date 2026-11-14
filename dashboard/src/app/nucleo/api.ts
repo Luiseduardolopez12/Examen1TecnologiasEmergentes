@@ -34,6 +34,11 @@ export interface FuenteAsistente { herramienta: string; filtros: Record<string, 
 export interface RespuestaAsistente {
   respuesta: string; respondida: boolean; fuentes: FuenteAsistente[]; modelo: string; duracion_ms: number;
 }
+export interface Alerta {
+  alerta_id: number; regla: string; periodo: string; ambito: string; valor_actual: number;
+  valor_referencia: number; variacion_pct: number; umbral_pct: number; severidad: 'MEDIA' | 'ALTA';
+  mensaje: string; estado: 'NUEVA' | 'REVISADA'; creado_en: string; revisada_en: string | null;
+}
 export interface Opciones { grupos: string[]; territorios: string[]; rango: { desde: string; hasta: string }; }
 export interface Actualizacion { ultima_carga: string | null; datos_hasta: string | null; }
 export interface Ejecucion {
@@ -72,5 +77,7 @@ export class Api {
   detalle(f: Filtros, pagina: number) { return this.get<Detalle>('/api/detalle', f, { pagina, tamano: 15 }); }
   pronostico() { return this.get<Pronostico>('/api/pronostico'); }
   preguntar(pregunta: string) { return this.http.post<RespuestaAsistente>(`${API_URL}/api/asistente`, { pregunta }); }
+  alertas() { return this.get<Alerta[]>('/api/alertas', {}, { limite: 100 }); }
+  revisarAlerta(id: number) { return this.http.post(`${API_URL}/api/alertas/${id}/revisar`, {}); }
   ejecuciones() { return this.get<Ejecucion[]>('/api/etl/ejecuciones', {}, { limite: 30 }); }
 }

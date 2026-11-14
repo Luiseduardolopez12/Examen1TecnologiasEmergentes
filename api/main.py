@@ -10,6 +10,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from alertas import acciones
 from api import consultas, seguridad
 from ia import asistente, registro
 from ia.gemini import ErrorIA
@@ -122,6 +123,19 @@ def preguntar(p: Pregunta):
         raise HTTPException(503, "El asistente no está disponible en este momento. Intenta de nuevo en unos segundos.")
     registro.guardar(p.pregunta, resultado)
     return resultado
+
+
+@app.get("/api/alertas", dependencies=protegido)
+def alertas(estado: Optional[str] = Query(None, pattern="^(NUEVA|REVISADA)$"),
+            limite: int = Query(50, ge=1, le=200)):
+    return consultas.alertas(estado, limite)
+
+
+@app.post("/api/alertas/{alerta_id}/revisar", dependencies=protegido)
+def revisar_alerta(alerta_id: int):
+    if not acciones.marcar_revisada(alerta_id):
+        raise HTTPException(404, "No existe esa alerta")
+    return {"alerta_id": alerta_id, "estado": "REVISADA"}
 
 
 @app.get("/api/etl/ejecuciones", dependencies=protegido)

@@ -56,12 +56,12 @@ def ejecutar(herramienta, parametros):
     opciones = consultas.opciones_filtros()
     if parametros.get("grupo"):
         if parametros["grupo"] not in opciones["grupos"]:
-            raise ValueError(f"El grupo '{parametros['grupo']}' no existe. Grupos válidos: {opciones['grupos']}")
+            raise ValueError(f"El grupo '{parametros['grupo']}' no existe. Grupos válidos: {', '.join(opciones['grupos'])}")
         usados["grupo"] = parametros["grupo"]
     if parametros.get("territorio"):
         if parametros["territorio"] not in opciones["territorios"]:
             raise ValueError(f"El territorio '{parametros['territorio']}' no existe. "
-                             f"Territorios válidos: {opciones['territorios']}")
+                             f"Territorios válidos: {', '.join(opciones['territorios'])}")
         usados["territorio"] = parametros["territorio"]
 
     if usa_limite:

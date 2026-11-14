@@ -185,3 +185,17 @@ def pronostico():
         "metricas": [{**m, "es_baseline": bool(m["es_baseline"]), "ganador": bool(m["ganador"])} for m in metricas],
         "historial": ventas_mensuales(),
     }
+
+
+def alertas(estado=None, limite=50):
+    """Alertas de negocio registradas por alertas/evaluar.py (las más recientes primero)."""
+    if consultar("SELECT OBJECT_ID('audit.alertas') AS o")[0]["o"] is None:
+        return []
+    filtro = "WHERE estado = :estado" if estado else ""
+    params = {"limite": limite, **({"estado": estado} if estado else {})}
+    return consultar(f"""
+        SELECT TOP (:limite) alerta_id, regla, periodo, ambito, CAST(valor_actual AS FLOAT) AS valor_actual,
+               CAST(valor_referencia AS FLOAT) AS valor_referencia, CAST(variacion_pct AS FLOAT) AS variacion_pct,
+               CAST(umbral_pct AS FLOAT) AS umbral_pct, severidad, mensaje, estado, creado_en, revisada_en
+        FROM audit.alertas {filtro}
+        ORDER BY periodo DESC, alerta_id DESC""", params)

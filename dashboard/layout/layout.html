@@ -1,0 +1,27 @@
+<header class="barra">
+  <div class="marca">
+    <strong>Analítica de Ventas</strong>
+    <span class="sub">WideWorldImporters · Data Warehouse</span>
+  </div>
+  <nav>
+    <a routerLink="/" routerLinkActive="activo" [routerLinkActiveOptions]="{ exact: true }">Resumen</a>
+    <a routerLink="/asistente" routerLinkActive="activo">Asistente</a>
+    <a routerLink="/alertas" routerLinkActive="activo">Alertas@if (estadoAlertas.nuevas() > 0) { <span class="contador">{{ estadoAlertas.nuevas() }}</span> }</a>
+    <a routerLink="/etl" routerLinkActive="activo">Monitoreo ETL</a>
+  </nav>
+  <div class="estado">
+    @if (actualizacion(); as a) {
+      <span>Datos hasta <strong>{{ fecha(a.datos_hasta) }}</strong></span>
+      <span>Última carga: <strong>{{ fecha(a.ultima_carga, true) }}</strong></span>
+    }
+    <button type="button" (click)="salir()">Salir</button>
+  </div>
+</header>
+@if (estadoAlertas.nuevas() > 0) {
+  <div class="aviso-alertas" role="status">
+    <strong>Atención:</strong>
+    {{ estadoAlertas.nuevas() === 1 ? 'hay 1 alerta nueva' : 'hay ' + estadoAlertas.nuevas() + ' alertas nuevas' }} de ventas.
+    <a routerLink="/alertas">Ver alertas</a>
+  </div>
+}
+<router-outlet />

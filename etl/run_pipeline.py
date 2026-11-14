@@ -62,6 +62,16 @@ def cargar_dw():
         run.rows_inserted, run.rows_updated = int(fila[0]), int(fila[1])
 
 
+def evaluar_alertas():
+    """Después de cada carga se revisan las reglas de negocio. Si falla, la carga ya quedó bien hecha."""
+    try:
+        from alertas.evaluar import ejecutar
+        print("\nEvaluando alertas de ventas...")
+        ejecutar()
+    except Exception as e:
+        print(f"Aviso: no se pudieron evaluar las alertas ({e}). La carga de datos sí terminó bien.")
+
+
 def main():
     ap = argparse.ArgumentParser(description="ETL ventas WideWorldImporters -> DW_Ventas")
     ap.add_argument("--modo", choices=["full", "incremental"], default="incremental")
@@ -71,6 +81,7 @@ def main():
     cargar_staging(args.modo)
     if not args.saltar_dw:
         cargar_dw()
+        evaluar_alertas()
     print("Listo. Revisa database/06_reconciliacion.sql para validar los totales.")
 
 

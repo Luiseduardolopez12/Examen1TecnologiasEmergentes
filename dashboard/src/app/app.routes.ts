@@ -10,6 +10,7 @@ export const routes: Routes = [
     children: [
       { path: '', loadComponent: () => import('./dashboard/dashboard').then(m => m.Dashboard) },
       { path: 'asistente', loadComponent: () => import('./asistente/asistente').then(m => m.Asistente) },
+      { path: 'alertas', loadComponent: () => import('./alertas/alertas').then(m => m.Alertas) },
       { path: 'etl', loadComponent: () => import('./etl/etl').then(m => m.Etl) },
     ],
   },

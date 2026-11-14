@@ -1,0 +1,50 @@
+<main class="contenido">
+  <div class="titulo">
+    <h1>Monitoreo del ETL</h1>
+    <button type="button" (click)="cargar()">{{ cargando() ? 'Actualizando…' : 'Actualizar' }}</button>
+  </div>
+  <p class="sub">Cada vez que corre el proceso de carga deja una fila en <code>audit.etl_runs</code>. Aquí se muestran las últimas 30.</p>
+
+  @if (error()) { <p class="aviso" role="alert">{{ error() }}</p> }
+
+  <section class="resumen">
+    <article><span>Última ejecución</span>
+      <strong>{{ ultima() ? fecha(ultima()!.start_time, true) : '—' }}</strong></article>
+    <article><span>Ejecuciones con error</span>
+      <strong [class.mal]="fallidas() > 0">{{ fallidas() }}</strong></article>
+    <article><span>Filas rechazadas (últimas 30)</span><strong>{{ numero(rechazadas()) }}</strong></article>
+  </section>
+
+  <section class="panel">
+    <div class="tabla-caja">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Proceso</th><th>Estado</th><th class="num">Leídas</th><th class="num">Insertadas</th>
+              <th class="num">Actualizadas</th><th class="num">Rechazadas</th><th>Inicio</th><th class="num">Duración</th></tr>
+        </thead>
+        <tbody>
+          @for (e of ejecuciones(); track e.execution_id) {
+            <tr>
+              <td>{{ e.execution_id }}</td>
+              <td>{{ e.pipeline_name }}</td>
+              <td>
+                <!-- el estado lleva icono y texto, no solo color -->
+                @if (e.status === 'SUCCESS') { <span class="estado ok">✓ Correcto</span> }
+                @else if (e.status === 'FAILED') { <span class="estado mal" [title]="e.error_detail ?? ''">✕ Falló</span> }
+                @else { <span class="estado">… {{ e.status }}</span> }
+              </td>
+              <td class="num">{{ e.rows_read === null ? '—' : numero(e.rows_read) }}</td>
+              <td class="num">{{ e.rows_inserted === null ? '—' : numero(e.rows_inserted) }}</td>
+              <td class="num">{{ e.rows_updated === null ? '—' : numero(e.rows_updated) }}</td>
+              <td class="num">{{ e.rows_rejected === null ? '—' : numero(e.rows_rejected) }}</td>
+              <td>{{ fecha(e.start_time, true) }}</td>
+              <td class="num">{{ duracion(e) }}</td>
+            </tr>
+          } @empty {
+            <tr><td colspan="9" class="vacio">Todavía no hay ejecuciones registradas.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>

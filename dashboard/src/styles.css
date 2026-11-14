@@ -1,0 +1,48 @@
+/* Colores definidos como variables: claro por defecto, oscuro si el sistema lo pide.
+   Paleta de series validada para daltonismo (azul, naranja...). */
+:root {
+  color-scheme: light;
+  --fondo: #f3f3f0;
+  --superficie: #fcfcfb;
+  --borde: #e2e1dc;
+  --texto: #0b0b0b;
+  --texto-2: #52514e;
+  --texto-3: #7a7973;
+  --rejilla: #ebeae6;
+  --serie-1: #2a78d6;
+  --serie-2: #eb6834;
+  --ok: #0f7b3f;
+  --error: #c4302b;
+  --acento: #2a78d6;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --fondo: #121211;
+    --superficie: #1a1a19;
+    --borde: #2c2c2a;
+    --texto: #f0efec;
+    --texto-2: #c3c2b7;
+    --texto-3: #8d8c84;
+    --rejilla: #2a2a28;
+    --serie-1: #3987e5;
+    --serie-2: #d95926;
+    --ok: #3cc17a;
+    --error: #ef6b66;
+    --acento: #3987e5;
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+}
+h1, h2, h3 { margin: 0; font-weight: 600; }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }

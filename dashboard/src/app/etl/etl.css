@@ -1,0 +1,24 @@
+.contenido { max-width: 1280px; margin: 0 auto; padding: 20px 24px 48px; display: flex; flex-direction: column; gap: 16px; }
+.titulo { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+h1 { font-size: 20px; }
+.titulo button { padding: 7px 12px; border: 1px solid var(--borde); border-radius: 8px; background: transparent; }
+.sub { margin: 0; color: var(--texto-2); font-size: 14px; }
+code { background: var(--superficie); border: 1px solid var(--borde); border-radius: 4px; padding: 1px 5px; font-size: 13px; }
+.aviso { margin: 0; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--error); color: var(--error); }
+
+.resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.resumen article { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; background: var(--superficie); border: 1px solid var(--borde); border-radius: 12px; }
+.resumen span { font-size: 13px; color: var(--texto-2); }
+.resumen strong { font-size: 20px; font-variant-numeric: tabular-nums; }
+.resumen strong.mal { color: var(--error); }
+
+.panel { background: var(--superficie); border: 1px solid var(--borde); border-radius: 12px; padding: 8px 12px; }
+.tabla-caja { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-size: 12px; font-weight: 600; color: var(--texto-2); padding: 10px; border-bottom: 1px solid var(--borde); white-space: nowrap; }
+td { padding: 8px 10px; border-bottom: 1px solid var(--rejilla); white-space: nowrap; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.vacio { text-align: center; color: var(--texto-3); padding: 24px 0; }
+.estado { font-weight: 600; }
+.estado.ok { color: var(--ok); }
+.estado.mal { color: var(--error); }

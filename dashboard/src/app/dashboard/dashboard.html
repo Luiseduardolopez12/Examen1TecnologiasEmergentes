@@ -1,0 +1,137 @@
+<main class="contenido">
+  <!-- Filtros: una sola fila, afectan a todo lo de abajo -->
+  <section class="filtros" aria-label="Filtros">
+    <label>Desde
+      <input type="date" [value]="filtros().desde ?? ''" [min]="opciones()?.rango?.desde ?? ''"
+             [max]="opciones()?.rango?.hasta ?? ''" (change)="cambiar('desde', $any($event.target).value)" />
+    </label>
+    <label>Hasta
+      <input type="date" [value]="filtros().hasta ?? ''" [min]="opciones()?.rango?.desde ?? ''"
+             [max]="opciones()?.rango?.hasta ?? ''" (change)="cambiar('hasta', $any($event.target).value)" />
+    </label>
+    <label>Grupo de producto
+      <select [value]="filtros().grupo ?? ''" (change)="cambiar('grupo', $any($event.target).value)">
+        <option value="">Todos</option>
+        @for (g of opciones()?.grupos ?? []; track g) { <option [value]="g">{{ g }}</option> }
+      </select>
+    </label>
+    <label>Territorio
+      <select [value]="filtros().territorio ?? ''" (change)="cambiar('territorio', $any($event.target).value)">
+        <option value="">Todos</option>
+        @for (t of opciones()?.territorios ?? []; track t) { <option [value]="t">{{ t }}</option> }
+      </select>
+    </label>
+    @if (hayFiltros()) {
+      <button type="button" class="limpiar" (click)="limpiar()">Quitar filtros</button>
+    }
+    @if (cargando()) { <span class="cargando" role="status">Actualizando…</span> }
+  </section>
+
+  @if (avisoFechas()) { <p class="aviso" role="alert">{{ avisoFechas() }}</p> }
+  @if (error()) { <p class="aviso" role="alert">{{ error() }}</p> }
+
+  <!-- Indicadores -->
+  @if (kpis(); as k) {
+    <section class="kpis" aria-label="Indicadores principales">
+      <article><span>Ventas netas</span><strong>{{ dinero(k.ventas_netas) }}</strong><small>sin impuesto</small></article>
+      <article><span>Ganancia</span><strong>{{ dinero(k.ganancia) }}</strong><small>{{ numero(k.unidades) }} unidades</small></article>
+      <article><span>Margen</span><strong>{{ porcentaje(k.margen_pct) }}</strong><small>ganancia / ventas netas</small></article>
+      <article><span>Facturas</span><strong>{{ numero(k.facturas) }}</strong><small>emitidas</small></article>
+      <article><span>Ticket promedio</span><strong>{{ dinero2(k.ticket_promedio) }}</strong><small>por factura</small></article>
+      <article><span>Clientes</span><strong>{{ numero(k.clientes) }}</strong><small>con compras</small></article>
+    </section>
+  }
+
+  <!-- Tendencia -->
+  <section class="panel ancho">
+    <h2>Ventas netas y ganancia por mes</h2>
+    @if (mensual().length) {
+      <div class="grafico alto">
+        <app-grafico tipo="linea" [etiquetas]="mesesEtiquetas()" [series]="mesesSeries()"
+                     descripcion="Línea de ventas netas y ganancia mensuales" />
+      </div>
+    } @else { <p class="vacio">Sin datos para estos filtros.</p> }
+  </section>
+
+  <div class="rejilla">
+    <section class="panel">
+      <h2>Top 10 productos</h2>
+      @if (productos().length) {
+        <div class="grafico"><app-grafico [horizontal]="true" [etiquetas]="productosEtiquetas()"
+          [series]="productosSeries()" descripcion="Barras de los diez productos más vendidos" /></div>
+      } @else { <p class="vacio">Sin datos para estos filtros.</p> }
+    </section>
+
+    <section class="panel">
+      <h2>Ventas por grupo de producto</h2>
+      @if (grupos().length) {
+        <div class="grafico"><app-grafico [horizontal]="true" [etiquetas]="gruposEtiquetas()"
+          [series]="gruposSeries()" descripcion="Barras de ventas por grupo de producto" /></div>
+      } @else { <p class="vacio">Sin datos para estos filtros.</p> }
+    </section>
+
+    <section class="panel">
+      <h2>Ventas por territorio</h2>
+      @if (territorios().length) {
+        <div class="grafico"><app-grafico [horizontal]="true" [etiquetas]="territoriosEtiquetas()"
+          [series]="territoriosSeries()" descripcion="Barras de ventas por territorio de ventas" /></div>
+      } @else { <p class="vacio">Sin datos para estos filtros.</p> }
+    </section>
+
+    <section class="panel">
+      <h2>Ventas por vendedor</h2>
+      @if (vendedores().length) {
+        <div class="grafico"><app-grafico [horizontal]="true" [etiquetas]="vendedoresEtiquetas()"
+          [series]="vendedoresSeries()" descripcion="Barras de ventas por vendedor" /></div>
+      } @else { <p class="vacio">Sin datos para estos filtros.</p> }
+    </section>
+  </div>
+
+  <!-- Top clientes -->
+  <section class="panel ancho">
+    <h2>Top 10 clientes</h2>
+    @if (clientes().length) {
+      <div class="tabla-caja">
+        <table>
+          <thead><tr><th>#</th><th>Cliente</th><th class="num">Facturas</th><th class="num">Ventas netas</th></tr></thead>
+          <tbody>
+            @for (c of clientes(); track c.cliente; let i = $index) {
+              <tr><td>{{ i + 1 }}</td><td>{{ c.cliente }}</td><td class="num">{{ numero(c.facturas) }}</td>
+                  <td class="num">{{ dinero(c.ventas_netas) }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else { <p class="vacio">Sin datos para estos filtros.</p> }
+  </section>
+
+  <!-- Detalle -->
+  <section class="panel ancho">
+    <h2>Detalle de ventas</h2>
+    @if (detalle(); as d) {
+      <div class="tabla-caja">
+        <table>
+          <thead>
+            <tr><th>Fecha</th><th>Factura</th><th>Cliente</th><th>Producto</th><th>Vendedor</th>
+                <th class="num">Cant.</th><th class="num">Venta neta</th><th class="num">Ganancia</th></tr>
+          </thead>
+          <tbody>
+            @for (l of d.filas; track $index) {
+              <tr><td>{{ fecha(l.fecha) }}</td><td>{{ l.factura }}</td><td>{{ l.cliente }}</td>
+                  <td>{{ l.producto }}</td><td>{{ l.vendedor }}</td><td class="num">{{ numero(l.cantidad) }}</td>
+                  <td class="num">{{ dinero2(l.venta_neta) }}</td><td class="num">{{ dinero2(l.ganancia) }}</td></tr>
+            } @empty {
+              <tr><td colspan="8" class="vacio">Sin ventas para estos filtros.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="paginacion">
+        <span>{{ numero(d.total) }} líneas · página {{ pagina() }} de {{ numero(totalPaginas()) }}</span>
+        <button type="button" (click)="irAPagina(1)" [disabled]="pagina() === 1">« Primera</button>
+        <button type="button" (click)="irAPagina(pagina() - 1)" [disabled]="pagina() === 1">‹ Anterior</button>
+        <button type="button" (click)="irAPagina(pagina() + 1)" [disabled]="pagina() >= totalPaginas()">Siguiente ›</button>
+      </div>
+    }
+  </section>
+</main>

@@ -27,7 +27,7 @@ y `audit` (ejecuciones, watermarks y filas rechazadas).
 | 5 API y dashboard | listo |
 | 6 Pronóstico y asistente de IA | listo |
 | 7 Alertas y monitoreo | listo |
-| 8 Integración, documentación y video | documentación lista; falta el video |
+| 8 Integración, documentación y video | listo |
 
 ## Documentación
 

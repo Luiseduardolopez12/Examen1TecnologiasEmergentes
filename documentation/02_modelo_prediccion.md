@@ -1,7 +1,5 @@
 # Modelo de predicción de ventas
 
-> Borrador base. Complétalo con los números de TU corrida (`python -m ml.entrenar`) y reescríbelo con tus palabras.
-
 ## Problema
 - **Qué se predice:** ventas netas mensuales (`NetSales` = total de la línea menos impuesto) de los próximos 6 meses.
 - **Quién lo usa:** gerencia comercial y compras.
@@ -10,7 +8,8 @@
 
 ## Datos
 - Origen: `dw.FactSales` agrupada por mes con `dw.DimDate` (dato del Data Warehouse, no de la base operativa).
-- Serie: 41 meses (2013-01 a 2016-05). _Completa: promedio, mínimo, máximo y variación que imprime el script._
+- Serie: 41 meses (2013-01 a 2016-05). Promedio mensual $4,201,496; mínimo $2,776,786 (2013-02); máximo $5,155,672 (2015-07). La variación (desviación / promedio) es de 11.1 %: una serie bastante estable.
+- Estacionalidad: el mes más fuerte es julio y el más flojo febrero, con 32 % de diferencia entre sus promedios.
 - Se descarta el último mes si está incompleto, y si falta un mes en medio el script se detiene: no se inventan datos.
 - Pocos datos: 3 años. Por eso se pronostican 6 meses y no más, y el script se niega a entrenar si hay menos de 30 meses.
 
@@ -33,9 +32,32 @@ No hay variables que usen información del futuro: las únicas entradas son el n
 El `alpha` no se ajustó con los datos (hay muy pocos): se fijó razonando que cada mes aparece unas 3 veces y que Ridge encoge su efecto por n / (n + alpha).
 
 ## Resultados
-_Pega aquí la tabla que imprime `python -m ml.entrenar` (MAE de validación, MAE de prueba, MAPE de prueba) y el modelo elegido._
+Corrida `v202611140124` (`execution_id` 20). Entrenamiento: 35 meses; prueba: 6 meses; 12 pliegues de validación.
 
-_Escribe una conclusión honesta: ¿el modelo elegido le gana al baseline en la prueba? ¿por cuánto? Si el baseline gana o empata, dilo: es un resultado válido._
+| Modelo | MAE validación | MAE prueba | MAPE prueba | |
+|---|---:|---:|---:|---|
+| Repetir el último mes | 375,239 | 453,987 | 9.8 % | baseline |
+| Promedio de 3 meses | 322,762 | 237,046 | 5.2 % | |
+| Mismo mes del año pasado | 471,501 | 241,093 | 5.2 % | |
+| **Tendencia lineal** | **252,800** | **260,197** | **6.0 %** | **elegido** |
+| Tendencia + estacionalidad | 298,044 | 236,048 | 5.2 % | |
+
+**Conclusión.** El modelo elegido, tendencia lineal, tuvo el menor error en la validación y en la prueba tiene **43 % menos error (MAE) que el baseline**: $260,197 contra $453,987, o 6.0 % contra 9.8 % de MAPE.
+
+Una observación honesta: en la prueba otros tres modelos salieron un poco mejor que el elegido (MAPE de 5.2 % contra 6.0 %). No se cambió de modelo por eso, porque elegir mirando la prueba la convertiría en validación y ya no mediría nada independiente. Además, con solo 6 meses de prueba, las diferencias entre los candidatos (de $236 mil a $260 mil de MAE) caben dentro del ruido; lo que sí es claro es que todos le ganan al baseline.
+
+Pronóstico generado (rango del 80 %):
+
+| Mes | Pronóstico | Rango |
+|---|---:|---|
+| 2016-06 | $4,708,901 | $4,266,653 a $5,151,149 |
+| 2016-07 | $4,733,063 | $4,290,815 a $5,175,311 |
+| 2016-08 | $4,757,225 | $4,314,977 a $5,199,473 |
+| 2016-09 | $4,781,387 | $4,339,139 a $5,223,635 |
+| 2016-10 | $4,805,550 | $4,363,302 a $5,247,798 |
+| 2016-11 | $4,829,712 | $4,387,464 a $5,271,960 |
+
+La tendencia lineal sube unos $24 mil por mes y no reproduce el patrón estacional (por ejemplo, la caída típica de febrero). Es el costo de tener pocos meses: el modelo con estacionalidad estimaba cada mes con unos 3 puntos y salió peor en la validación.
 
 ## Intervalo del pronóstico
 Rango del 80 %: pronóstico ± 1.28 × RMSE de validación del modelo elegido. Es una aproximación (supone errores parecidos a una normal e independientes entre meses).

@@ -1,5 +1,7 @@
 # Alcance y decisiones de diseño
 
+> Borrador base. Léelo completo y reescríbelo con tus palabras: en la defensa te van a preguntar el porqué de cada decisión.
+
 ## Proceso elegido
 
 **Ventas** de WideWorldImporters. Es el proceso con más historia (2013 a mayo 2016), varias dimensiones y volumen suficiente (unas 228 mil líneas de factura) para que el dashboard y el modelo tengan sentido.
